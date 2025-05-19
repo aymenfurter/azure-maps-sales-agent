@@ -1,9 +1,10 @@
 """
 Unit tests for initialize.py
 """
+
 import os
-import pytest
 from unittest.mock import patch
+
 import initilize
 
 
@@ -29,10 +30,10 @@ def test_main_function(capsys):
     with patch.dict(os.environ, {"AZURE_MAPS_KEY": "test-key-value"}):
         with patch("initilize.load_dotenv") as mock_load_dotenv:
             initilize.main()
-            
+
             # Check if load_dotenv was called with override=True
             mock_load_dotenv.assert_called_once_with(override=True)
-            
+
             # Check output
             captured = capsys.readouterr()
             assert "Sales Day Planning Assistant - Initialization" in captured.out

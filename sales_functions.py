@@ -1,17 +1,17 @@
 """
 Sales functions for route planning and client visits using Azure Maps.
 """
-from mock_api import get_todays_clients, get_client_details, OFFICE_LOCATION
+
 import json
 import os
-import requests
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-import base64
-from io import BytesIO
-import time
-from dotenv import load_dotenv
+from typing import Dict, List, Optional
 from urllib.parse import urlencode
+
+import requests
+from dotenv import load_dotenv
+
+from mock_api import OFFICE_LOCATION, get_client_details, get_todays_clients
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,19 +42,16 @@ def format_coordinates_for_azure_maps(clients: List[Dict]) -> str:
         String formatted for Azure Maps Route API
     """
     # Start with office coordinates
-    coordinates = [
-        f"{OFFICE_LOCATION['coordinates']['latitude']},{OFFICE_LOCATION['coordinates']['longitude']}"]
+    coordinates = [f"{OFFICE_LOCATION['coordinates']['latitude']},{OFFICE_LOCATION['coordinates']['longitude']}"]
 
     # Add all client coordinates
     for client in clients:
-        coordinates.append(
-            f"{client['coordinates']['latitude']},{client['coordinates']['longitude']}")
+        coordinates.append(f"{client['coordinates']['latitude']},{client['coordinates']['longitude']}")
 
     # End back at the office
-    coordinates.append(
-        f"{OFFICE_LOCATION['coordinates']['latitude']},{OFFICE_LOCATION['coordinates']['longitude']}")
+    coordinates.append(f"{OFFICE_LOCATION['coordinates']['latitude']},{OFFICE_LOCATION['coordinates']['longitude']}")
 
-    return ':'.join(coordinates)
+    return ":".join(coordinates)
 
 
 def get_clients_for_today() -> str:
@@ -83,10 +80,10 @@ def get_clients_for_today() -> str:
                     "name": client["name"],
                     "address": client["address"],
                     "contact": client["contact"],
-                    "priority": client["priority"]
+                    "priority": client["priority"],
                 }
                 for client in result["clients"]
-            ]
+            ],
         }
 
         return json.dumps(formatted_result)
@@ -103,7 +100,7 @@ def plan_optimal_route() -> str:
     Returns:
         JSON string with the planned route information
     """
-    global current_route, current_client_list
+    global current_route
 
     try:
         # Check if we have clients
@@ -115,24 +112,28 @@ def plan_optimal_route() -> str:
 
             # If still no clients after getting today's list
             if not current_client_list:
-                return json.dumps({
-                    "message": "No clients scheduled for today.",
-                    "total_distance_km": 0,
-                    "total_duration_minutes": 0,
-                    "start_time": datetime.now().strftime("%H:%M"),
-                    "end_time": datetime.now().strftime("%H:%M"),
-                    "optimized_client_order": [],
-                    "itinerary": [{
-                        "leg_number": 1,
-                        "origin": OFFICE_LOCATION["name"],
-                        "origin_address": OFFICE_LOCATION["address"],
-                        "destination": OFFICE_LOCATION["name"],
-                        "destination_address": OFFICE_LOCATION["address"],
-                        "distance_km": 0,
-                        "duration_minutes": 0,
-                        "travel_instructions": ["Remain at office - no client visits scheduled"]
-                    }]
-                })
+                return json.dumps(
+                    {
+                        "message": "No clients scheduled for today.",
+                        "total_distance_km": 0,
+                        "total_duration_minutes": 0,
+                        "start_time": datetime.now().strftime("%H:%M"),
+                        "end_time": datetime.now().strftime("%H:%M"),
+                        "optimized_client_order": [],
+                        "itinerary": [
+                            {
+                                "leg_number": 1,
+                                "origin": OFFICE_LOCATION["name"],
+                                "origin_address": OFFICE_LOCATION["address"],
+                                "destination": OFFICE_LOCATION["name"],
+                                "destination_address": OFFICE_LOCATION["address"],
+                                "distance_km": 0,
+                                "duration_minutes": 0,
+                                "travel_instructions": ["Remain at office - no client visits scheduled"],
+                            }
+                        ],
+                    }
+                )
 
         # Get Azure Maps key
         azure_maps_key = get_azure_maps_key()
@@ -146,11 +147,10 @@ def plan_optimal_route() -> str:
             return json.dumps({"message": "No clients to plan a route for.", "itinerary": []})
 
         # Format coordinates for Azure Maps
-        coordinates_query = format_coordinates_for_azure_maps(
-            original_clients_for_route)
+        coordinates_query = format_coordinates_for_azure_maps(original_clients_for_route)
 
         # Prepare request to Azure Maps Route API
-        url = f"https://atlas.microsoft.com/route/directions/json"
+        url = "https://atlas.microsoft.com/route/directions/json"
         params = {
             "subscription-key": azure_maps_key,
             "api-version": "1.0",
@@ -160,7 +160,7 @@ def plan_optimal_route() -> str:
             "traffic": "true",
             "travelMode": "car",
             "instructionsType": "text",
-            "computeTravelTimeFor": "all"
+            "computeTravelTimeFor": "all",
         }
 
         print(f"Requesting route with params: {params}")
@@ -182,25 +182,22 @@ def plan_optimal_route() -> str:
         if "error" in response_data:
             error_detail = response_data.get("error", {})
             error_code = error_detail.get("code", "unknown")
-            error_message = error_detail.get(
-                "message", "Unknown Azure Maps API error")
-            return json.dumps({
-                "error": f"Azure Maps API error: {error_code} - {error_message}",
-                "request_params": params
-            })
+            error_message = error_detail.get("message", "Unknown Azure Maps API error")
+            return json.dumps({"error": f"Azure Maps API error: {error_code} - {error_message}", "request_params": params})
 
         # Validate route data
         routes = response_data.get("routes", [])
         if not routes:
-            return json.dumps({
-                "error": "No route data received from Azure Maps API",
-                "api_response": response_data
-            })
+            return json.dumps({"error": "No route data received from Azure Maps API", "api_response": response_data})
 
         # Process route data - clean up large point arrays
         for route in response_data["routes"]:
             for leg in route["legs"]:
                 leg.pop("points", None)
+
+        # Save the route data
+        global current_route
+        current_route = response_data
 
         # Log the processed response for debugging
         with open("route_response.json", "w") as f:
@@ -226,7 +223,7 @@ def get_next_visit() -> str:
     Returns:
         JSON string with next visit information
     """
-    global current_client_list, current_visit_index
+    global current_visit_index
 
     try:
         # Check if we have a route planned
@@ -241,12 +238,14 @@ def get_next_visit() -> str:
 
         # Check if we've completed all visits
         if current_visit_index >= len(current_client_list):
-            return json.dumps({
-                "message": "All client visits completed. Returning to office.",
-                "location": "Office",
-                "address": OFFICE_LOCATION["address"],
-                "status": "completed"
-            })
+            return json.dumps(
+                {
+                    "message": "All client visits completed. Returning to office.",
+                    "location": "Office",
+                    "address": OFFICE_LOCATION["address"],
+                    "status": "completed",
+                }
+            )
 
         # Get the next client
         next_client = current_client_list[current_visit_index]
@@ -266,7 +265,7 @@ def get_next_visit() -> str:
             "priority": next_client["priority"],
             "last_visit": client_details.get("last_visit", "Unknown"),
             "notes": client_details.get("notes", "No notes available"),
-            "status": "in_progress"
+            "status": "in_progress",
         }
 
         return json.dumps(result)
@@ -283,7 +282,6 @@ def get_current_visit_status() -> str:
     Returns:
         JSON string with current visit information
     """
-    global current_client_list, current_visit_index
 
     try:
         # Check if we have a route planned
@@ -296,25 +294,29 @@ def get_current_visit_status() -> str:
         # Check visit index status
         if current_visit_index < 0:
             # Not started any visits yet
-            return json.dumps({
-                "message": "Sales day not yet started. Currently at office.",
-                "location": "Office",
-                "address": OFFICE_LOCATION["address"],
-                "next_action": "Use get_next_visit to start your first client visit",
-                "status": "not_started"
-            })
+            return json.dumps(
+                {
+                    "message": "Sales day not yet started. Currently at office.",
+                    "location": "Office",
+                    "address": OFFICE_LOCATION["address"],
+                    "next_action": "Use get_next_visit to start your first client visit",
+                    "status": "not_started",
+                }
+            )
         elif current_visit_index >= len(current_client_list):
             # Completed all visits
-            return json.dumps({
-                "message": "All client visits completed. Returned to office.",
-                "location": "Office",
-                "address": OFFICE_LOCATION["address"],
-                "status": "completed",
-                "summary": {
-                    "total_visits": len(current_client_list),
-                    "clients_visited": [client["name"] for client in current_client_list]
+            return json.dumps(
+                {
+                    "message": "All client visits completed. Returned to office.",
+                    "location": "Office",
+                    "address": OFFICE_LOCATION["address"],
+                    "status": "completed",
+                    "summary": {
+                        "total_visits": len(current_client_list),
+                        "clients_visited": [client["name"] for client in current_client_list],
+                    },
                 }
-            })
+            )
         else:
             # In progress - get current client
             current_client = current_client_list[current_visit_index]
@@ -329,8 +331,12 @@ def get_current_visit_status() -> str:
                 "client_name": current_client["name"],
                 "address": current_client["address"],
                 "contact_person": current_client["contact"],
-                "next_action": "Complete this visit and use get_next_visit to proceed to the next client" if remaining > 0 else "Complete this visit to finish your sales day",
-                "status": "in_progress"
+                "next_action": (
+                    "Complete this visit and use get_next_visit to proceed to the next client"
+                    if remaining > 0
+                    else "Complete this visit to finish your sales day"
+                ),
+                "status": "in_progress",
             }
 
             return json.dumps(result)
@@ -368,11 +374,7 @@ def generate_location_map(query: Optional[str] = None, lat: Optional[float] = No
         elif query and not lat and not lon:
             # If we only have a query, we need to geocode it first
             geocode_url = "https://atlas.microsoft.com/search/address/json"
-            geocode_params = {
-                "subscription-key": get_azure_maps_key(),
-                "api-version": "1.0",
-                "query": query
-            }
+            geocode_params = {"subscription-key": get_azure_maps_key(), "api-version": "1.0", "query": query}
 
             geocode_response = requests.get(geocode_url, params=geocode_params)
             if geocode_response.status_code != 200:
@@ -413,7 +415,7 @@ def generate_location_map(query: Optional[str] = None, lat: Optional[float] = No
             "width": "800",
             "height": "600",
             "center": f"{lon},{lat}",
-            "pins": pin_param
+            "pins": pin_param,
         }
 
         # Build the Azure Maps static image URL
@@ -426,11 +428,7 @@ def generate_location_map(query: Optional[str] = None, lat: Optional[float] = No
             "map_url": map_url,  # Direct URL to the map image
             "coordinates": {"latitude": lat, "longitude": lon},
             "type": "image/png",
-            "_chat_display": {
-                "type": "image",
-                "url": map_url,
-                "title": f"Map of {location_name}"
-            }
+            "_chat_display": {"type": "image", "url": map_url, "title": f"Map of {location_name}"},
         }
 
         return json.dumps(result)
@@ -455,10 +453,7 @@ def reset_sales_day() -> str:
     current_client_list = None
     current_visit_index = -1
 
-    return json.dumps({
-        "message": "Sales day has been reset. You can now plan a new route.",
-        "status": "success"
-    })
+    return json.dumps({"message": "Sales day has been reset. You can now plan a new route.", "status": "success"})
 
 
 def main():
@@ -486,8 +481,7 @@ def main():
         if "error" in map_data:
             print("Map error:", map_data["error"])
         else:
-            print(
-                f"Map generated successfully for {map_data['location_name']}")
+            print(f"Map generated successfully for {map_data['location_name']}")
             print(f"Image size: {len(map_data['map_url'])} bytes")
 
         print("\n6. Testing generate_location_map() with query...")
@@ -496,8 +490,7 @@ def main():
         if "error" in map_query_data:
             print("Map query error:", map_query_data["error"])
         else:
-            print(
-                f"Map generated successfully for {map_query_data['location_name']}")
+            print(f"Map generated successfully for {map_query_data['location_name']}")
             print(f"Image size: {len(map_query_data['map_url'])} bytes")
 
         print("\n7. Testing additional visits...")

@@ -1,7 +1,6 @@
 import random
-import json
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict
 
 # Sample client data with addresses that work with Azure Maps
 SAMPLE_CLIENTS = [
@@ -11,7 +10,7 @@ SAMPLE_CLIENTS = [
         "contact": "Thomas Mueller",
         "address": "Paradeplatz 8, 8001 Zürich",
         "coordinates": {"latitude": 47.369800, "longitude": 8.539185},
-        "priority": "high"
+        "priority": "high",
     },
     {
         "id": "CL002",
@@ -19,7 +18,7 @@ SAMPLE_CLIENTS = [
         "contact": "Maria Bernhard",
         "address": "Bahnhofstrasse 15, 3920 Zermatt",
         "coordinates": {"latitude": 46.023731, "longitude": 7.747419},
-        "priority": "medium"
+        "priority": "medium",
     },
     {
         "id": "CL003",
@@ -27,15 +26,15 @@ SAMPLE_CLIENTS = [
         "contact": "Jean Dupont",
         "address": "Rue du Rhône 30, 1204 Genève",
         "coordinates": {"latitude": 46.203566, "longitude": 6.151768},
-        "priority": "high"
-    }
+        "priority": "high",
+    },
 ]
 
 # Office/starting location
 OFFICE_LOCATION = {
     "name": "Office",
     "address": "Stockerstrasse 9, 8002 Zürich",
-    "coordinates": {"latitude": 47.366374, "longitude": 8.536213}
+    "coordinates": {"latitude": 47.366374, "longitude": 8.536213},
 }
 
 
@@ -60,11 +59,7 @@ def get_todays_clients(count: int = 5) -> Dict[str, Any]:
     # Select clients for today
     todays_clients = random.sample(SAMPLE_CLIENTS, count)
 
-    return {
-        "date": today.strftime("%Y-%m-%d"),
-        "office": OFFICE_LOCATION,
-        "clients": todays_clients
-    }
+    return {"date": today.strftime("%Y-%m-%d"), "office": OFFICE_LOCATION, "clients": todays_clients}
 
 
 def get_client_details(client_id: str) -> Dict[str, Any]:
@@ -85,27 +80,26 @@ def get_client_details(client_id: str) -> Dict[str, Any]:
             days_ago = random.randint(15, 60)
             last_visit = today.replace(day=1)  # Move to first day of month
             for _ in range(days_ago):  # Move back one day at a time
-                last_visit = (last_visit.replace(
-                    day=max(1, last_visit.day - 1)))
+                last_visit = last_visit.replace(day=max(1, last_visit.day - 1))
                 if last_visit.day == 1:  # If we hit the first of a month
                     if last_visit.month > 1:
-                        last_visit = last_visit.replace(
-                            month=last_visit.month - 1)
+                        last_visit = last_visit.replace(month=last_visit.month - 1)
                     else:
-                        last_visit = last_visit.replace(
-                            year=last_visit.year - 1, month=12)
+                        last_visit = last_visit.replace(year=last_visit.year - 1, month=12)
 
             additional_info = {
                 "last_visit": last_visit.strftime("%Y-%m-%d"),
                 "total_purchases": round(random.uniform(5000, 50000), 2),
                 "active_contracts": random.randint(1, 3),
-                "notes": random.choice([
-                    "Interested in new product line",
-                    "Looking to expand current services",
-                    "Contract renewal coming up",
-                    "Recently upgraded their subscription",
-                    "Has open support tickets"
-                ])
+                "notes": random.choice(
+                    [
+                        "Interested in new product line",
+                        "Looking to expand current services",
+                        "Contract renewal coming up",
+                        "Recently upgraded their subscription",
+                        "Has open support tickets",
+                    ]
+                ),
             }
 
             return {**client, **additional_info}
