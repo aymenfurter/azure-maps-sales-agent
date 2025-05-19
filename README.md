@@ -70,7 +70,25 @@ pytest
 
 # Run tests with coverage report
 pytest --cov=. --cov-report=term
+
+# Run integration tests (only works with real API keys)
+pytest -m integration
 ```
+
+### Integration Tests
+
+The project includes special integration tests that verify the code works with real API credentials. These tests only run when a valid Azure Maps API key is present in the environment and are skipped otherwise.
+
+To run integration tests:
+1. Ensure you have a valid `AZURE_MAPS_KEY` in your environment or .env file
+2. Run `pytest -m integration`
+
+These tests make real calls to Azure Maps API services including:
+- Route optimization
+- Map generation
+- Complete workflows
+
+> Note: Integration tests are marked with `@pytest.mark.integration` and are automatically skipped if no valid API key is detected.
 
 ### Test Coverage
 

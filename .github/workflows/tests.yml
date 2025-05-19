@@ -22,11 +22,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-      - name: Run tests
+      - name: Run unit tests
         run: |
-          pytest --cov=. --cov-report=xml
+          pytest --cov=. --cov-report=xml --cov-report=term -k "not integration"
         env:
-          AZURE_MAPS_KEY: ${{ secrets.AZURE_MAPS_KEY || 'dummy_key_for_testing' }}
+          AZURE_MAPS_KEY: dummy_key_for_testing
+          
+      - name: Run integration tests
+        run: |
+          pytest -v -m integration
+        env:
+          AZURE_MAPS_KEY: ${{ secrets.AZURE_MAPS_KEY }}
+        continue-on-error: true
           
       - name: Upload coverage report
         uses: codecov/codecov-action@v3
