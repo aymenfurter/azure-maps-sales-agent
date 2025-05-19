@@ -12,3 +12,7 @@ opentelemetry-api
 pytest
 pytest-mock
 pytest-cov
+# Linting dependencies
+flake8
+black
+isort

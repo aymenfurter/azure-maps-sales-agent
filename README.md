@@ -104,11 +104,39 @@ The test suite currently achieves the following coverage:
 
 ### Continuous Integration
 
-Tests are automatically run via GitHub Actions on push and pull requests to the main branch. The workflow:
+Tests and linting are automatically run via GitHub Actions on push and pull requests to the main branch. The workflow:
 
 1. Sets up a Python environment
 2. Installs all dependencies
-3. Runs the test suite with code coverage reporting
-4. Uploads coverage data to Codecov (if configured)
+3. Runs linting checks:
+   - flake8: Checks for syntax errors and warnings
+   - black: Verifies code style and formatting
+   - isort: Ensures imports are sorted properly
+4. Runs the test suite with code coverage reporting
+5. Uploads coverage data to Codecov (if configured)
+
+### Linting
+
+The project uses several linting tools to maintain code quality:
+
+```bash
+# Format code with Black
+black .
+
+# Sort imports with isort
+isort .
+
+# Run flake8 checks
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+```
+
+Code styling is enforced using:
+- **Black**: For consistent code formatting
+- **isort**: For organized and consistent import statements
+- **flake8**: For detecting syntax errors and style issues
+
+All linting tools are configured with appropriate settings in:
+- `setup.cfg`: Configuration for flake8
+- `pyproject.toml`: Configuration for Black and isort
 
 You can check the status of builds in the Actions tab of the repository.
