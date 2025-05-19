@@ -1,0 +1,29 @@
+{
+  "routes": [
+    {
+      "summary": {
+        "lengthInMeters": 15000,
+        "travelTimeInSeconds": 1800,
+        "trafficDelayInSeconds": 120
+      },
+      "legs": [
+        {
+          "summary": {
+            "lengthInMeters": 5000,
+            "travelTimeInSeconds": 600
+          }
+        },
+        {
+          "summary": {
+            "lengthInMeters": 10000,
+            "travelTimeInSeconds": 1200
+          }
+        }
+      ],
+      "sections": [],
+      "guidance": {
+        "instructions": []
+      }
+    }
+  ]
+}

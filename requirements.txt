@@ -8,3 +8,7 @@ opentelemetry-sdk
 opentelemetry-instrumentation
 opentelemetry-semantic-conventions
 opentelemetry-api
+# Testing dependencies
+pytest
+pytest-mock
+pytest-cov

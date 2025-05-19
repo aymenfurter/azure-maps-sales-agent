@@ -56,3 +56,20 @@ A ready-made **Dev Container** is provided. In VS Code:
 1. Install the “Dev Containers” extension.
 2. Reopen the folder in container.
 3. The `postCreateCommand` installs dependencies automatically.
+
+## Running Tests
+
+The project includes a comprehensive test suite using pytest. To run the tests:
+
+```bash
+# Install test dependencies
+pip install -r requirements.txt
+
+# Run tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=. --cov-report=term
+```
+
+The tests are also automatically run via GitHub Actions on push and pull requests to the main branch.
