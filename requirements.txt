@@ -1,0 +1,10 @@
+gradio
+azure-ai-projects==1.0.0b5
+azure-identity
+python-dotenv
+requests
+azure-monitor-opentelemetry
+opentelemetry-sdk
+opentelemetry-instrumentation
+opentelemetry-semantic-conventions
+opentelemetry-api
