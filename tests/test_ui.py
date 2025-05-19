@@ -5,16 +5,87 @@ These tests use mocked services for Azure AI Projects to ensure
 no real API calls are made during testing.
 """
 
+import json
 import os
 import signal
 import subprocess
 import time
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from playwright.sync_api import Page, expect
 
 from tests.mock_services import MockAIProjectClient
+
+
+class MockResponse:
+    """Mock HTTP response for requests.get mocked calls."""
+
+    def __init__(self, status_code=200, json_data=None):
+        self.status_code = status_code
+        self.json_data = json_data or {}
+        self.text = json.dumps(self.json_data)
+
+    def json(self):
+        """Return JSON data from the mock response."""
+        return self.json_data
+
+
+def mock_azure_maps_route_response(*args, **kwargs):
+    """Generate a mock response for Azure Maps Route API."""
+    return MockResponse(
+        json_data={
+            "routes": [
+                {
+                    "summary": {
+                        "lengthInMeters": 120500,
+                        "travelTimeInSeconds": 7500,
+                        "trafficDelayInSeconds": 300,
+                    },
+                    "legs": [
+                        {"summary": {"lengthInMeters": 40000, "travelTimeInSeconds": 2500}},
+                        {"summary": {"lengthInMeters": 35000, "travelTimeInSeconds": 2200}},
+                        {"summary": {"lengthInMeters": 45500, "travelTimeInSeconds": 2800}},
+                    ],
+                }
+            ]
+        }
+    )
+
+
+def mock_azure_maps_geocode_response(*args, **kwargs):
+    """Generate a mock response for Azure Maps Geocoding API."""
+    return MockResponse(
+        json_data={
+            "results": [
+                {
+                    "position": {
+                        "lat": 47.3698,
+                        "lon": 8.539185,
+                    },
+                    "address": {
+                        "freeformAddress": "Zurich, Switzerland",
+                    },
+                }
+            ]
+        }
+    )
+
+
+def mock_requests_get(*args, **kwargs):
+    """Mock all requests.get calls based on the URL."""
+    url = args[0] if args else kwargs.get("url", "")
+    
+    if "route/directions" in url:
+        return mock_azure_maps_route_response(*args, **kwargs)
+    elif "search/address" in url:
+        return mock_azure_maps_geocode_response(*args, **kwargs)
+    elif "map/static" in url:
+        # For static map images, just return a success response with a mock URL
+        return MockResponse(json_data={"map_url": "https://mock.azure.maps.com/static-map.png"})
+    
+    # Default fallback response
+    return MockResponse(status_code=404, json_data={"error": "Mock endpoint not found"})
 
 
 @pytest.fixture
@@ -46,6 +117,7 @@ def test_chat_interface_basic_interaction(setup_environment, mock_project_client
     with (
         patch("main.AIProjectClient.from_connection_string", return_value=mock_project_client),
         patch("main.project_client", mock_project_client),
+        patch("requests.get", side_effect=mock_requests_get),
     ):
 
         # Start the Gradio server in a separate process
@@ -108,6 +180,7 @@ def test_chat_interface_tool_interactions(setup_environment, mock_project_client
     with (
         patch("main.AIProjectClient.from_connection_string", return_value=mock_project_client),
         patch("main.project_client", mock_project_client),
+        patch("requests.get", side_effect=mock_requests_get),
     ):
 
         server = subprocess.Popen(["python", "main.py"], preexec_fn=os.setsid)

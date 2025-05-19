@@ -3,7 +3,7 @@ Mock services for testing, especially UI tests with Playwright.
 """
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from mock_api import get_client_details, get_todays_clients
 
@@ -73,6 +73,52 @@ class MockAgentService:
         return MockStream(thread_id, assistant_id, event_handler, self)
 
 
+class MockMapsService:
+    """Mock implementation for Azure Maps services."""
+
+    @staticmethod
+    def generate_route():
+        """Generate a mock route response."""
+        return {
+            "routes": [
+                {
+                    "summary": {
+                        "lengthInMeters": 120500,
+                        "travelTimeInSeconds": 7500,
+                        "trafficDelayInSeconds": 300,
+                    },
+                    "legs": [
+                        {"summary": {"lengthInMeters": 40000, "travelTimeInSeconds": 2500}},
+                        {"summary": {"lengthInMeters": 35000, "travelTimeInSeconds": 2200}},
+                        {"summary": {"lengthInMeters": 45500, "travelTimeInSeconds": 2800}},
+                    ],
+                }
+            ]
+        }
+    
+    @staticmethod
+    def generate_static_map(lat, lon):
+        """Generate a mock static map URL."""
+        return f"https://mock.azure.maps.com/map/static/png?center={lon},{lat}&zoom=15&pins=default|{lon}+{lat}"
+    
+    @staticmethod
+    def geocode_address(query):
+        """Generate a mock geocoding response."""
+        return {
+            "results": [
+                {
+                    "position": {
+                        "lat": 47.3698,
+                        "lon": 8.539185,
+                    },
+                    "address": {
+                        "freeformAddress": query if query else "Zurich, Switzerland",
+                    },
+                }
+            ]
+        }
+
+
 class MockStream:
     """Simulate a stream of events from the Azure AI Projects API."""
 
@@ -81,6 +127,7 @@ class MockStream:
         self.assistant_id = assistant_id
         self.event_handler = event_handler
         self.agent_service = agent_service
+        self.maps_service = MockMapsService()
 
         # Pre-defined responses to common queries
         self.responses = {
@@ -112,6 +159,8 @@ class MockStream:
     def _get_route_response(self):
         """Generate a response for the route planning request."""
         clients = get_todays_clients(count=3)["clients"]
+        route_data = self.maps_service.generate_route()
+        
         return {
             "message": "Route planned successfully",
             "total_distance_km": 120.5,
@@ -119,28 +168,22 @@ class MockStream:
             "start_time": "09:00",
             "end_time": "17:00",
             "optimized_client_order": [client["name"] for client in clients],
-            "routes": [
-                {
-                    "summary": {"lengthInMeters": 120500, "travelTimeInSeconds": 7500, "trafficDelayInSeconds": 300},
-                    "legs": [
-                        {"summary": {"lengthInMeters": 40000, "travelTimeInSeconds": 2500}},
-                        {"summary": {"lengthInMeters": 35000, "travelTimeInSeconds": 2200}},
-                        {"summary": {"lengthInMeters": 45500, "travelTimeInSeconds": 2800}},
-                    ],
-                }
-            ],
+            "routes": route_data["routes"],
         }
 
     def _get_map_response(self):
         """Generate a mock map response."""
+        lat, lon = 47.3698, 8.539185
+        mock_map_url = self.maps_service.generate_static_map(lat, lon)
+        
         return {
             "location_name": "Swiss Banking Corp",
-            "map_url": "https://example.com/mock-map-image.png",
-            "coordinates": {"latitude": 47.3698, "longitude": 8.539185},
+            "map_url": mock_map_url,
+            "coordinates": {"latitude": lat, "longitude": lon},
             "type": "image/png",
             "_chat_display": {
                 "type": "image",
-                "url": "https://example.com/mock-map-image.png",
+                "url": mock_map_url,
                 "title": "Map of Swiss Banking Corp",
             },
         }
