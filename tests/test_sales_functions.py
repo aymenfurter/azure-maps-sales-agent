@@ -323,6 +323,73 @@ def test_generate_location_map_with_query(mock_get_key, mock_requests_get, reset
     assert result_data["_chat_display"]["type"] == "image"
 
 
+@patch("sales_functions.get_azure_maps_key")
+@patch("requests.get")
+def test_generate_location_map_with_coordinates(mock_requests_get, mock_get_key, reset_globals):
+    """Test generate_location_map with latitude and longitude parameters."""
+    # Setup mocks
+    mock_get_key.return_value = "test_key"
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_requests_get.return_value = mock_response
+    
+    # Test coordinates
+    lat = 47.3698
+    lon = 8.5392
+    
+    # Call function with coordinates
+    result = sales_functions.generate_location_map(lat=lat, lon=lon)
+    result_data = json.loads(result)
+    
+    # Validate result
+    assert "coordinates" in result_data
+    assert result_data["coordinates"]["latitude"] == lat
+    assert result_data["coordinates"]["longitude"] == lon
+    assert "map_url" in result_data
+    assert "_chat_display" in result_data
+    assert result_data["_chat_display"]["type"] == "image"
+
+
+@patch("sales_functions.get_azure_maps_key")
+@patch("requests.get")
+def test_generate_location_map_api_error(mock_requests_get, mock_get_key, reset_globals):
+    """Test generate_location_map with API error response."""
+    # Setup mocks
+    mock_get_key.return_value = "test_key"
+    
+    # Mock error response
+    mock_requests_get.return_value = MockResponse({"error": {"code": "400", "message": "Invalid parameter"}}, 400)
+    
+    # Call function with query
+    result = sales_functions.generate_location_map(query="Invalid Location")
+    result_data = json.loads(result)
+    
+    # Validate error response
+    assert "error" in result_data
+
+
+def test_get_next_visit_no_clients(reset_globals):
+    """Test get_next_visit when no clients are available."""
+    # Ensure no clients are set
+    sales_functions.current_client_list = None
+    sales_functions.current_visit_index = -1
+    
+    # Mock plan_optimal_route to return an error
+    with patch.object(sales_functions, 'plan_optimal_route') as mock_plan:
+        mock_plan.return_value = json.dumps({"error": "No clients available"})
+        
+        # Call function
+        result = sales_functions.get_next_visit()
+        result_data = json.loads(result)
+        
+        # Validate error is passed through
+        assert "error" in result_data
+        assert "No clients available" in result_data["error"]
+        
+        # Verify plan_optimal_route was called
+        mock_plan.assert_called_once()
+
+
 def test_reset_sales_day(reset_globals):
     """Test reset_sales_day function."""
     # Setup some state

@@ -72,4 +72,25 @@ pytest
 pytest --cov=. --cov-report=term
 ```
 
-The tests are also automatically run via GitHub Actions on push and pull requests to the main branch.
+### Test Coverage
+
+The test suite currently achieves the following coverage:
+
+| Module | Coverage |
+|--------|----------|
+| mock_api.py | 100% |
+| sales_functions.py | ~60% |
+| initialize.py | 94% |
+| chat_ui.py | 12% |
+| Overall | ~57% |
+
+### Continuous Integration
+
+Tests are automatically run via GitHub Actions on push and pull requests to the main branch. The workflow:
+
+1. Sets up a Python environment
+2. Installs all dependencies
+3. Runs the test suite with code coverage reporting
+4. Uploads coverage data to Codecov (if configured)
+
+You can check the status of builds in the Actions tab of the repository.
