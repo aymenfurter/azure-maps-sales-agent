@@ -12,6 +12,8 @@ opentelemetry-api
 pytest
 pytest-mock
 pytest-cov
+pytest-playwright
+playwright
 # Linting dependencies
 flake8
 black

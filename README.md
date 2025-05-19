@@ -73,6 +73,9 @@ pytest --cov=. --cov-report=term
 
 # Run integration tests (only works with real API keys)
 pytest -m integration
+
+# Run UI tests with Playwright
+pytest -m ui
 ```
 
 ### Integration Tests
@@ -90,6 +93,29 @@ These tests make real calls to Azure Maps API services including:
 
 > Note: Integration tests are marked with `@pytest.mark.integration` and are automatically skipped if no valid API key is detected.
 
+### UI Tests with Playwright
+
+The project includes browser-based UI tests that validate the Gradio interface using Playwright. These tests use mocked backend services to avoid making real API calls.
+
+To run UI tests:
+
+```bash
+# Install Playwright dependencies
+pip install pytest-playwright
+playwright install --with-deps chromium
+
+# Run the UI tests
+pytest -m ui
+```
+
+The UI tests verify:
+- Basic interface functionality
+- Chat interactions
+- Example button clicks
+- Tool-based responses (maps, client lists, route planning)
+
+> Note: UI tests are marked with `@pytest.mark.ui` and require Playwright to be installed.
+
 ### Test Coverage
 
 The test suite currently achieves the following coverage:
@@ -99,8 +125,8 @@ The test suite currently achieves the following coverage:
 | mock_api.py | 100% |
 | sales_functions.py | ~60% |
 | initialize.py | 94% |
-| chat_ui.py | 12% |
-| Overall | ~57% |
+| chat_ui.py | ~25% |
+| Overall | ~60% |
 
 ### Continuous Integration
 
@@ -113,7 +139,8 @@ Tests and linting are automatically run via GitHub Actions on push and pull requ
    - black: Verifies code style and formatting
    - isort: Ensures imports are sorted properly
 4. Runs the test suite with code coverage reporting
-5. Uploads coverage data to Codecov (if configured)
+5. Runs UI tests with Playwright in a separate job
+6. Uploads coverage data to Codecov (if configured)
 
 ### Linting
 
