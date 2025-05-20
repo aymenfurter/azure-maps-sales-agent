@@ -1,4 +1,5 @@
 gradio
+plotly
 azure-ai-projects==1.0.0b5
 azure-identity
 python-dotenv
@@ -8,3 +9,13 @@ opentelemetry-sdk
 opentelemetry-instrumentation
 opentelemetry-semantic-conventions
 opentelemetry-api
+# Testing dependencies
+pytest
+pytest-mock
+pytest-cov
+pytest-playwright
+playwright
+# Linting dependencies
+flake8
+black
+isort
