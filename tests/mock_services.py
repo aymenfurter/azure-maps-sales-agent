@@ -3,7 +3,7 @@ Mock services for testing, especially UI tests with Playwright.
 """
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from mock_api import get_client_details, get_todays_clients
 

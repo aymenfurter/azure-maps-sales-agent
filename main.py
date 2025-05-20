@@ -1,8 +1,8 @@
-import os
 import json
-import plotly.graph_objects as go
+import os
 
 import gradio as gr
+import plotly.graph_objects as go
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import BingGroundingTool, FunctionTool, ToolSet
 from azure.identity import DefaultAzureCredential
@@ -68,27 +68,37 @@ with tracer.start_as_current_span("setup_agent") as span:
     )
 
     instructions = """
-    You are a helpful Sales Planning Assistant designed to help sales professionals plan and execute their daily client visits. Follow these rules:
+    You are a helpful Sales Planning Assistant designed to help sales professionals plan and execute their daily client visits.
+    Follow these rules:
 
-    1. **Get Clients:** When the user asks about today's clients or schedule, use `get_clients_for_today` to retrieve the list of clients to visit.
+    1. **Get Clients:** When the user asks about today's clients or schedule, use `get_clients_for_today` to retrieve
+       the list of clients to visit.
 
-    2. **Plan Route:** When the user asks to plan or optimize their route, use `plan_optimal_route` to get the most efficient route between client locations. Always explain the route plan clearly with total distance, time, and the order of visits.
+    2. **Plan Route:** When the user asks to plan or optimize their route, use `plan_optimal_route` to get the most efficient
+       route between client locations. Always explain the route plan clearly with distance, time, and visit order.
 
-    3. **Next Visit:** When the user asks about their next client or what's next on their schedule, use `get_next_visit` to advance to the next client in the optimized route.
+    3. **Next Visit:** When the user asks about their next client or what's next on their schedule, use `get_next_visit`
+       to advance to the next client in the optimized route.
 
-    4. **Current Status:** If the user asks about their current location or progress, use `get_current_visit_status` to check which client they're currently visiting.
+    4. **Current Status:** If the user asks about their current location or progress, use `get_current_visit_status`
+       to check which client they're currently visiting.
 
-    5. **Show Maps:** When the user asks to see a location or needs directions, use `generate_location_map` to create a static map image for their current or next location. Explain the map is being generated, then display it when ready.
+    5. **Show Maps:** When the user asks to see a location or needs directions, use `generate_location_map` to create
+       a static map image for their current or next location. Explain the map is being generated, then display it when ready.
 
-    6. **Reset Day:** If the user wants to start over or plan a different route, use `reset_sales_day` to clear the current plan.
+    6. **Reset Day:** If the user wants to start over or plan a different route, use `reset_sales_day`
+       to clear the current plan.
 
-    7. **Be Conversational:** Maintain a helpful, conversational tone. Remember that you're assisting someone who is potentially driving between client locations.
+    7. **Be Conversational:** Maintain a helpful, conversational tone. Remember that you're assisting someone who is
+       potentially driving between client locations.
 
-    8. **Provide Context:** Always provide useful context with each response, such as travel time to the next location, important client notes, or details about the current visit.
+    8. **Provide Context:** Always provide useful context with each response, such as travel time to the next location,
+       important client notes, or details about the current visit.
 
     9. **General Questions:** For questions not related to sales planning, use the Bing grounding tool when appropriate.
 
-    10. **Display Images:** When showing a map, make sure to display the image and explain what the user is seeing.
+    10. **Display Images:** When showing a map, make sure to display the image and explain
+       what the user is seeing.
 
     Always ask if the user needs any more information about their sales route or client visits.
     """
@@ -117,7 +127,7 @@ azure_sales_chat = create_chat_interface(project_client, agent, thread, tracer)
 
 def process_route_data(route_file="/workspaces/appmag/route_response.json"):
     try:
-        with open(route_file, 'r') as f:
+        with open(route_file, "r") as f:
             data = json.load(f)
 
         if not data.get("routes"):
@@ -129,13 +139,15 @@ def process_route_data(route_file="/workspaces/appmag/route_response.json"):
 
         for instruction in route["guidance"]["instructions"]:
             if "point" in instruction:
-                instructions.append({
-                    "type": instruction["instructionType"],
-                    "street": instruction.get("street", ""),
-                    "message": instruction.get("message", ""),
-                    "lat": instruction["point"]["latitude"],
-                    "lon": instruction["point"]["longitude"]
-                })
+                instructions.append(
+                    {
+                        "type": instruction["instructionType"],
+                        "street": instruction.get("street", ""),
+                        "message": instruction.get("message", ""),
+                        "lat": instruction["point"]["latitude"],
+                        "lon": instruction["point"]["longitude"],
+                    }
+                )
                 coordinates.append([instruction["point"]["latitude"], instruction["point"]["longitude"]])
 
         fig = go.Figure()
@@ -144,64 +156,49 @@ def process_route_data(route_file="/workspaces/appmag/route_response.json"):
         lat_list = [point[0] for point in coordinates]
         lon_list = [point[1] for point in coordinates]
 
-        fig.add_trace(go.Scattermapbox(
-            lat=lat_list,
-            lon=lon_list,
-            mode='lines',
-            line=dict(width=2, color='blue'),
-            name='Route',
-            showlegend=False
-        ))
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=lat_list, lon=lon_list, mode="lines", line=dict(width=2, color="blue"), name="Route", showlegend=False
+            )
+        )
 
         marker_props = {
             "LOCATION_DEPARTURE": {"color": "green", "size": 15},
             "LOCATION_WAYPOINT": {"color": "blue", "size": 15},
             "LOCATION_ARRIVAL": {"color": "red", "size": 15},
-            "TURN": {"color": "orange", "size": 8}
+            "TURN": {"color": "orange", "size": 8},
         }
 
         for instr in instructions:
             props = marker_props.get(instr["type"], {"color": "gray", "size": 6})
 
-            hover_text = (
-                f"Type: {instr['type']}<br>"
-                f"Street: {instr['street']}<br>"
-                f"Action: {instr['message']}"
-            )
+            hover_text = f"Type: {instr['type']}<br>" f"Street: {instr['street']}<br>" f"Action: {instr['message']}"
 
-            fig.add_trace(go.Scattermapbox(
-                lat=[instr["lat"]],
-                lon=[instr["lon"]],
-                mode='markers',
-                marker=dict(
-                    size=props["size"],
-                    color=props["color"]
-                ),
-                text=[hover_text],
-                name=instr["type"],
-                showlegend=False,
-                hoverinfo='text'
-            ))
+            fig.add_trace(
+                go.Scattermapbox(
+                    lat=[instr["lat"]],
+                    lon=[instr["lon"]],
+                    mode="markers",
+                    marker=dict(size=props["size"], color=props["color"]),
+                    text=[hover_text],
+                    name=instr["type"],
+                    showlegend=False,
+                    hoverinfo="text",
+                )
+            )
 
         # Center map on Switzerland
         fig.update_layout(
-            mapbox=dict(
-                style="open-street-map",
-                center=dict(lat=46.8, lon=8.2),
-                zoom=7
-            ),
+            mapbox=dict(style="open-street-map", center=dict(lat=46.8, lon=8.2), zoom=7),
             margin=dict(l=0, r=0, t=0, b=0),
             height=600,
-            showlegend=False  # Add this line to disable legend completely
+            showlegend=False,  # Add this line to disable legend completely
         )
 
         # Extract navigation sections
         nav_sections = []
         for group in route["guidance"]["instructionGroups"]:
-            nav_sections.append([
-                f"Section {len(nav_sections) + 1}",
-                group["groupMessage"]
-            ])
+            nav_sections.append([f"Section {len(nav_sections) + 1}", group["groupMessage"]])
 
         return fig, nav_sections
     except Exception as e:
@@ -232,9 +229,7 @@ with gr.Blocks(
             route_accordion = gr.Accordion("Navigation Instructions", open=False)
             with route_accordion:
                 navigation = gr.Dataframe(
-                    headers=["Section", "Instructions"],
-                    datatype=["str", "str"],
-                    label="Route Instructions"
+                    headers=["Section", "Instructions"], datatype=["str", "str"], label="Route Instructions"
                 )
 
     def clear_history():
@@ -280,10 +275,7 @@ with gr.Blocks(
             return fig, nav_sections
         return None, []
 
-    view_route_btn.click(
-        visualize_route,
-        outputs=[route_map, navigation]
-    )
+    view_route_btn.click(visualize_route, outputs=[route_map, navigation])
 
 if __name__ == "__main__":
     if not os.environ.get("AZURE_MAPS_KEY"):

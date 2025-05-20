@@ -10,7 +10,7 @@ import os
 import signal
 import subprocess
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from playwright.sync_api import Page, expect

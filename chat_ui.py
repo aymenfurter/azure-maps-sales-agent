@@ -157,7 +157,10 @@ class EventHandler(AgentEventHandler):
                             elif func_name == "check_item_stock" and "stock" in output:
                                 message = f"{output['name']} (ID: {output['item_id']}): {output['stock']} units in stock."
                             elif func_name == "find_item_location" and "location_id" in output:
-                                message = f"{output['name']} (ID: {output['item_id']}) is located at Shelf {output['location_id']}, Position {output['position']}."
+                                message = (
+                                    f"{output['name']} (ID: {output['item_id']}) is located at "
+                                    f"Shelf {output['location_id']}, Position {output['position']}."
+                                )
                             elif func_name == "get_items_needing_restock" and "count" in output:
                                 count = output["count"]
                                 if count > 0:
