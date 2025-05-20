@@ -75,7 +75,7 @@ def mock_azure_maps_geocode_response(*args, **kwargs):
 def mock_requests_get(*args, **kwargs):
     """Mock all requests.get calls based on the URL."""
     url = args[0] if args else kwargs.get("url", "")
-    
+
     if "route/directions" in url:
         return mock_azure_maps_route_response(*args, **kwargs)
     elif "search/address" in url:
@@ -83,7 +83,7 @@ def mock_requests_get(*args, **kwargs):
     elif "map/static" in url:
         # For static map images, just return a success response with a mock URL
         return MockResponse(json_data={"map_url": "https://mock.azure.maps.com/static-map.png"})
-    
+
     # Default fallback response
     return MockResponse(status_code=404, json_data={"error": "Mock endpoint not found"})
 

@@ -95,12 +95,12 @@ class MockMapsService:
                 }
             ]
         }
-    
+
     @staticmethod
     def generate_static_map(lat, lon):
         """Generate a mock static map URL."""
         return f"https://mock.azure.maps.com/map/static/png?center={lon},{lat}&zoom=15&pins=default|{lon}+{lat}"
-    
+
     @staticmethod
     def geocode_address(query):
         """Generate a mock geocoding response."""
@@ -160,7 +160,7 @@ class MockStream:
         """Generate a response for the route planning request."""
         clients = get_todays_clients(count=3)["clients"]
         route_data = self.maps_service.generate_route()
-        
+
         return {
             "message": "Route planned successfully",
             "total_distance_km": 120.5,
@@ -175,7 +175,7 @@ class MockStream:
         """Generate a mock map response."""
         lat, lon = 47.3698, 8.539185
         mock_map_url = self.maps_service.generate_static_map(lat, lon)
-        
+
         return {
             "location_name": "Swiss Banking Corp",
             "map_url": mock_map_url,
