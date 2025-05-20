@@ -1,22 +1,55 @@
-# Sales Planning Assistant
+# Sales Planning Assistant 🗺️🚗
 
-A Gradio-based application that uses Azure Maps and Azure AI Projects to help sales representatives plan and execute daily client visits.
+[![Tests and Linting](https://github.com/aymenfurter/azure-maps-sales-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/aymenfurter/azure-maps-sales-agent/actions/workflows/tests.yml)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Code Coverage](https://img.shields.io/codecov/c/github/aymenfurter/azure-maps-sales-agent)](https://codecov.io/gh/aymenfurter/azure-maps-sales-agent)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
-- Retrieve today’s client list.
-- Generate an optimized driving route via Azure Maps.
-- Track visit progress and show current status.
-- Display static map images for any location.
-- Reset the sales day at any time.
-- Chat interface powered by Azure AI Projects and Gradio.
+A Gradio-based application that leverages Azure Maps and Azure AI Projects to help sales representatives plan and execute daily client visits efficiently.
 
-## Prerequisites
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Technologies Used](#-technologies-used)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start)
+- [Environment Variables](#-environment-variables)
+- [Running in Dev Container](#-running-in-dev-container)
+- [Running Tests](#-running-tests)
+  - [Integration Tests](#integration-tests)
+  - [UI Tests with Playwright](#ui-tests-with-playwright)
+  - [Test Coverage](#test-coverage)
+  - [Continuous Integration](#continuous-integration)
+  - [Linting](#linting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+## ✨ Features
+
+- **Client Management**: Retrieve and manage today's client list
+- **Route Optimization**: Generate an optimized driving route via Azure Maps
+- **Visit Tracking**: Track visit progress and show current status
+- **Location Visualization**: Display static map images for any location
+- **Day Management**: Reset the sales day at any time
+- **Interactive Chat**: User-friendly chat interface powered by Azure AI Projects and Gradio
+
+## 🛠️ Technologies Used
+
+- **Frontend**: Gradio for interactive UI
+- **Maps & Routing**: Azure Maps API
+- **AI Integration**: Azure AI Projects
+- **Charting**: Plotly
+- **Authentication**: Azure Identity
+- **Observability**: Azure Monitor OpenTelemetry
+
+## 📋 Prerequisites
+
 - Python 3.10+
-- An Azure subscription (for Maps and AI Projects).
-- Azure Maps Key.
-- (Optional) Bing Search connection for general questions.
+- An Azure subscription (for Maps and AI Projects)
+- Azure Maps Key
+- (Optional) Bing Search connection for general questions
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 # 1. Clone repository
@@ -38,7 +71,7 @@ cp .env.example .env
 python main.py
 ```
 
-## Environment Variables
+## 🔐 Environment Variables
 
 Create a `.env` file in the project root (or edit the sample below) and provide the required secrets.
 
@@ -49,15 +82,16 @@ PROJECT_CONNECTION_STRING="region.api.azureml.ms;workspace-guid;workspace-name;p
 MODEL_DEPLOYMENT_NAME="gpt-4o"
 ```
 
-> Never commit your real keys to source control.
+> ⚠️ Never commit your real keys to source control.
 
-## Running in Dev Container
+## 🐳 Running in Dev Container
+
 A ready-made **Dev Container** is provided. In VS Code:
-1. Install the “Dev Containers” extension.
+1. Install the "Dev Containers" extension.
 2. Reopen the folder in container.
 3. The `postCreateCommand` installs dependencies automatically.
 
-## Running Tests
+## 🧪 Running Tests
 
 The project includes a comprehensive test suite using pytest. To run the tests:
 
@@ -167,3 +201,17 @@ All linting tools are configured with appropriate settings in:
 - `pyproject.toml`: Configuration for Black and isort
 
 You can check the status of builds in the Actions tab of the repository.
+
+## 👥 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
