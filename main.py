@@ -1,4 +1,6 @@
 import os
+import json
+import plotly.graph_objects as go
 
 import gradio as gr
 from azure.ai.projects import AIProjectClient
@@ -112,19 +114,128 @@ with tracer.start_as_current_span("create_thread") as span:
 
 azure_sales_chat = create_chat_interface(project_client, agent, thread, tracer)
 
+
+def process_route_data(route_file="/workspaces/appmag/route_response.json"):
+    try:
+        with open(route_file, 'r') as f:
+            data = json.load(f)
+
+        if not data.get("routes"):
+            return None, []
+
+        route = data["routes"][0]
+        coordinates = []
+        instructions = []
+
+        for instruction in route["guidance"]["instructions"]:
+            if "point" in instruction:
+                instructions.append({
+                    "type": instruction["instructionType"],
+                    "street": instruction.get("street", ""),
+                    "message": instruction.get("message", ""),
+                    "lat": instruction["point"]["latitude"],
+                    "lon": instruction["point"]["longitude"]
+                })
+                coordinates.append([instruction["point"]["latitude"], instruction["point"]["longitude"]])
+
+        fig = go.Figure()
+
+        # Add route line
+        lat_list = [point[0] for point in coordinates]
+        lon_list = [point[1] for point in coordinates]
+
+        fig.add_trace(go.Scattermapbox(
+            lat=lat_list,
+            lon=lon_list,
+            mode='lines',
+            line=dict(width=2, color='blue'),
+            name='Route',
+            showlegend=False
+        ))
+
+        marker_props = {
+            "LOCATION_DEPARTURE": {"color": "green", "size": 15},
+            "LOCATION_WAYPOINT": {"color": "blue", "size": 15},
+            "LOCATION_ARRIVAL": {"color": "red", "size": 15},
+            "TURN": {"color": "orange", "size": 8}
+        }
+
+        for instr in instructions:
+            props = marker_props.get(instr["type"], {"color": "gray", "size": 6})
+
+            hover_text = (
+                f"Type: {instr['type']}<br>"
+                f"Street: {instr['street']}<br>"
+                f"Action: {instr['message']}"
+            )
+
+            fig.add_trace(go.Scattermapbox(
+                lat=[instr["lat"]],
+                lon=[instr["lon"]],
+                mode='markers',
+                marker=dict(
+                    size=props["size"],
+                    color=props["color"]
+                ),
+                text=[hover_text],
+                name=instr["type"],
+                showlegend=False,
+                hoverinfo='text'
+            ))
+
+        # Center map on Switzerland
+        fig.update_layout(
+            mapbox=dict(
+                style="open-street-map",
+                center=dict(lat=46.8, lon=8.2),
+                zoom=7
+            ),
+            margin=dict(l=0, r=0, t=0, b=0),
+            height=600,
+            showlegend=False  # Add this line to disable legend completely
+        )
+
+        # Extract navigation sections
+        nav_sections = []
+        for group in route["guidance"]["instructionGroups"]:
+            nav_sections.append([
+                f"Section {len(nav_sections) + 1}",
+                group["groupMessage"]
+            ])
+
+        return fig, nav_sections
+    except Exception as e:
+        print(f"Error processing route data: {e}")
+        return None, []
+
+
 with gr.Blocks(
     title="Sales Planning Assistant",
     fill_height=True,
     css="""
-            .chat-area   {height:65vh !important; overflow:auto;}
-            .input-area  {position:sticky; bottom:0;}
+            .chat-area { height:65vh !important; overflow:auto; }
+            .input-area { position:sticky; bottom:0; }
+            .route-section { border-top: 2px solid #eee; padding-top: 20px; margin-top: 20px; }
         """,
 ) as demo:
     gr.Markdown("## Sales Planning Assistant")
     gr.Markdown("*Plan your sales day and navigate client visits with AI assistance*")
 
-    chatbot = gr.Chatbot(type="messages", label="Chat History", elem_classes="chat-area", layout="panel")
-    input_box = gr.Textbox(label="Ask the assistant …", elem_classes="input-area")
+    with gr.Row():
+        with gr.Column(scale=2):
+            chatbot = gr.Chatbot(type="messages", label="Chat History", elem_classes="chat-area", layout="panel")
+            input_box = gr.Textbox(label="Ask the assistant …", elem_classes="input-area")
+        with gr.Column(scale=1, elem_classes="route-section"):
+            gr.Markdown("### Route Visualization")
+            view_route_btn = gr.Button("Visualize Last Route")
+            route_map = gr.Plot(label="Route Map")
+            route_accordion = gr.Accordion("Navigation Instructions", open=False)
+            with route_accordion:
+                navigation = gr.Dataframe(
+                    headers=["Section", "Instructions"],
+                    datatype=["str", "str"],
+                    label="Route Instructions"
+                )
 
     def clear_history():
         with tracer.start_as_current_span("clear_chat_history") as span:
@@ -161,6 +272,17 @@ with gr.Blocks(
 
     input_box.submit(azure_sales_chat, inputs=[input_box, chatbot], outputs=[chatbot, input_box], show_progress="full").then(
         lambda: "", outputs=input_box
+    )
+
+    def visualize_route():
+        fig, nav_sections = process_route_data()
+        if fig:
+            return fig, nav_sections
+        return None, []
+
+    view_route_btn.click(
+        visualize_route,
+        outputs=[route_map, navigation]
     )
 
 if __name__ == "__main__":

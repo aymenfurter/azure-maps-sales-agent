@@ -277,6 +277,7 @@ def create_chat_interface(project_client, agent, thread, tracer=None):
                 "bing_grounding": "🔎 Searching Web Sources",
                 "generate_location_map": "🗺️ Generating Map",
                 "get_clients_for_today": "📅 Today's Clients",
+                "unknown_function": "🔍 Searching Web",
             }
 
             tool_icons_status = {"pending": "⏳", "done": "✅", "error": "❌"}
